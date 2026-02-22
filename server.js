@@ -90,6 +90,11 @@ app.get("/songs", (req, res) => {
     }
 });
 
+// Test route
+app.get("/", (req, res) => {
+  res.send("Music Player Backend Running 🚀");
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
