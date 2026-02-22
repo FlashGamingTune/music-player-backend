@@ -47,7 +47,7 @@ app.post("/upload", upload.single("song"), async (req, res) => {
 
         const stream = cloudinary.uploader.upload_stream(
             {
-                resource_type: "video", // important for audio
+                resource_type: "video",
                 folder: "music-player"
             },
             async (error, result) => {
@@ -77,6 +77,16 @@ app.post("/upload", upload.single("song"), async (req, res) => {
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Get all songs
+app.get("/songs", (req, res) => {
+    try {
+        const songs = JSON.parse(fs.readFileSync(songsFilePath));
+        res.json(songs);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to load songs" });
     }
 });
 
