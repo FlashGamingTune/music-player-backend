@@ -1,5 +1,21 @@
 require("dotenv").config();
 
+
+const mongoose = require("mongoose");
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("✅ MongoDB Connected"))
+    .catch(err => console.error("❌ MongoDB Error:", err));
+
+const songSchema = new mongoose.Schema({
+    name: String,
+    url: String
+});
+
+const Song = mongoose.model("Song", songSchema);
+
+// Cloudinary configuration
 const { v2: cloudinary } = require("cloudinary");
 
 cloudinary.config({
@@ -8,6 +24,7 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Log admin key for debugging
 console.log("ADMIN_KEY:", process.env.ADMIN_KEY);
 
 const express = require("express");
@@ -57,16 +74,22 @@ app.post("/upload", upload.single("song"), async (req, res) => {
                     return res.status(500).json({ message: "Upload failed" });
                 }
 
-                const songs = JSON.parse(fs.readFileSync(songsFilePath));
+                // const songs = JSON.parse(fs.readFileSync(songsFilePath));
+                const songSchema = new mongoose.Schema({
+                    name: String,
+                    url: String
+                });
+
+                const Song = mongoose.model("Song", songSchema);
 
                 const newSong = {
                     name: req.file.originalname,
                     url: result.secure_url
                 };
 
-                songs.push(newSong);
+                // songs.push(newSong);
+                // fs.writeFileSync(songsFilePath, JSON.stringify(songs, null, 2));
 
-                fs.writeFileSync(songsFilePath, JSON.stringify(songs, null, 2));
 
                 res.json({ message: "Song uploaded successfully" });
             }
@@ -81,9 +104,9 @@ app.post("/upload", upload.single("song"), async (req, res) => {
 });
 
 // Get all songs
-app.get("/songs", (req, res) => {
+app.get("/songs", async (req, res) => {
     try {
-        const songs = JSON.parse(fs.readFileSync(songsFilePath));
+        const songs = await Song.find().sort({ _id: -1 });
         res.json(songs);
     } catch (err) {
         res.status(500).json({ message: "Failed to load songs" });
@@ -92,7 +115,7 @@ app.get("/songs", (req, res) => {
 
 // Test route
 app.get("/", (req, res) => {
-  res.send("Music Player Backend Running 🚀");
+    res.send("Music Player Backend Running 🚀");
 });
 
 app.listen(PORT, () => {
